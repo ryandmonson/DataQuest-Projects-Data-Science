@@ -5,4 +5,6 @@ This repo showcases the projects I'm completing for the Data Analyst/Data Scient
 
 Guided Project 14- Multi variable regression modeling of Home Prices
 
+Guided Project 12 - Evaluate Jeopardy questions/answers for word match, questions for being used previously
+
 Guided Project 11 - Spam filter using an algorithm based on the Naive Bayes Theorem 
