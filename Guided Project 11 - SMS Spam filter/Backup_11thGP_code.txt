@@ -1,0 +1,148 @@
+#import pandas, read file
+import pandas as pd
+df = pd.read_csv(r"C:\Users\drrdm\Data Quest Guided Projects\11th Guided Project - SMS Spam filter\SMSSpamCollection", 
+                 header = None, sep = '\t', names = ['Label', 'SMS'])
+
+#how many rows and columns
+df.shape
+
+#relative frequency of spam and ham
+df['Label'].value_counts(normalize= True)
+
+#split data into training and test sets
+df = df.sample(frac = 1, random_state = 1) #randomize full dataset
+
+dftest = df.iloc[0:1113].copy().reset_index(drop = True)
+dftrain = df.iloc[1114:5572].copy().reset_index(drop = True)
+
+print(dftest['Label'].value_counts(normalize = True))
+print(dftrain['Label'].value_counts(normalize = True))
+
+NOTE:Distribution of ham and spam in testing and training datasets similiar 
+to distribution in SMSSpamCollection
+
+#remove punctuation from SMS column in train dataset
+
+dftrain['SMS'] = dftrain['SMS'].str.replace(pat ='\W', repl = ' ', 
+                                             regex=True).str.lower()
+
+dftrain.head()
+
+
+#split message row into a word list
+
+train_SMSsplit = dftrain['SMS'].str.split()
+
+#list of all words in SMS
+vocabulary = []
+for row in train_SMSsplit:
+    for word in row:
+        vocabulary.append(word)
+
+#remove duplicates, convert back to list
+s = set(vocabulary)
+vocabulary = list(s)
+
+len(vocabulary)
+
+#check to see if no duplicates
+import collections
+counter=collections.Counter(vocabulary)
+print(counter.most_common(20))
+
+vocabulary[0:10]
+
+#use code provided by Dataquest to create dictionary of unique words
+#Note: Not clear on what's happening here.
+word_counts_per_sms = {unique_word: [0] * len(train_SMSsplit) 
+                       for unique_word in vocabulary}
+
+for index, sms in enumerate(train_SMSsplit):
+    for word in sms:
+        word_counts_per_sms[word][index] += 1
+
+train_SMSsplit.head()
+
+# Turn the training dict into a dataframe
+train_dict = pd.DataFrame(data = word_counts_per_sms)
+train_dict.head()
+
+#concat dftrain (label, SMS) with train_dict (individual words in SMS)
+
+dftrain_final = pd.concat([dftrain,train_dict], axis = 1, sort = False)
+
+# check randomly chosen words (recently,pin,soon,to) to see if the column count > 0 (validate this was done right)
+
+print('recently: ', dftrain_final['recently'].sum())
+print('pin: ', dftrain_final['pin'].sum())
+print('soon: ',dftrain_final['soon'].sum())
+print('to: ', dftrain_final['to'].sum())
+
+pspam = .1345 #from value counts earlier
+pham = .8654 #from value counts earlier
+alpha = 1
+
+#number of words in the messages
+
+spam_SMS = dftrain_final[dftrain_final['Label'] == 'spam']
+spam_no_words = spam_SMS['SMS'].str.split().apply(len).sum()
+print('total # of words in spam SMS: ',spam_no_words)
+
+ham_SMS = dftrain_final[dftrain_final['Label'] == 'ham']
+ham_no_words = ham_SMS['SMS'].str.split().apply(len).sum()
+print('total # of words in ham SMS: ',ham_no_words)
+
+no_vocabulary = len(vocabulary)
+print('total # of words in the vocabulary: ', no_vocabulary)
+
+#split up the dataframe into a ham and spam frame
+
+ham_df = dftrain_final[dftrain_final['Label'] == 'ham']
+spam_df = dftrain_final[dftrain_final['Label'] == 'spam']
+
+#count word occurences in ham and spam SMS, determine word probability for the respective dicts
+
+for word in vocabulary:
+    n_ham_word = ham_df[word].sum()
+    p_ham_word = (n_ham_word + 1)/(ham_no_words + no_vocabulary)
+    ham_words[word] = p_ham_word
+    
+    n_spam_word = spam_df[word].sum()
+    p_spam_word = (n_spam_word + 1)/(spam_no_words + no_vocabulary)
+    spam_words[word] = p_spam_word
+
+spam_words #check one of the dictionaries to verify
+
+#some of this code provided by Dataquest
+
+import re
+
+def classify(message):
+
+    message = re.sub('\W', ' ', message)
+    message = message.lower()
+    message = message.split()
+
+    p_spam_given_message = .1345
+    p_ham_given_message = .8654
+    for word in message:
+        if word in spam_words:
+            p_spam_given_message *= spam_words[word]
+        if word in ham_words:
+            p_ham_given_message *= ham_words[word]
+
+    print('P(Spam|message):', p_spam_given_message)
+    print('P(Ham|message):', p_ham_given_message)
+
+    if p_ham_given_message > p_spam_given_message:
+        print('Label: Ham')
+    elif p_ham_given_message < p_spam_given_message:
+        print('Label: Spam')
+    else:
+        print('Equal proabilities, have a human classify this!')
+
+#Test the filter on a ham message
+classify('Sounds good Tom. Then see u there')
+
+#Test the filter on a spam message
+classify('WINNER!! This is the secret code to unlock the money: C3421.')
