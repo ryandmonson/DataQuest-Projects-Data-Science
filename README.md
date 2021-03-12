@@ -1,7 +1,7 @@
 # DataQuest-Projects
 Data Science Projects from DataQuest
 
-This repo showcases the projects I'm completing for the Data Analyst/Data Scientist program in the on line bootcamp Dataquest.io. Most of these projects were done in Jupyter notebooks.
+This repo showcases the projects I've completed for the Data Analyst/Data Scientist program in the on line bootcamp Dataquest.io. Most of these projects were done in Jupyter notebooks.
 
 Guided Project 20 - Kaggle submission workflow using SciKit Learn built-in methods for best features and best model selection 
 
